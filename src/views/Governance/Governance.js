@@ -1,57 +1,76 @@
-/*eslint-disable*/
+//Default
 import React from 'react';
+import { useState, useEffect } from 'react';
+
+//Style
 import { makeStyles } from '@material-ui/core/styles';
+import Loader from '../../components/Loader/Loader.js';
+import CircularProgress from '@mui/material/CircularProgress';
+
+//Group
 import GridItem from '../../components/Grid/GridItem.js';
 import GridContainer from '../../components/Grid/GridContainer.js';
+
 import Card from '../../components/Card/Card.js';
 import CardHeader from '../../components/Card/CardHeader.js';
 import CardBody from '../../components/Card/CardBody.js';
 import CardAvatar from '../../components/Card/CardAvatar.js';
-import Close from '@material-ui/icons/Close';
-import Check from '@material-ui/icons/Check';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import { Label, Input } from 'reactstrap';
-import Danger from '../../components/Typography/Danger.js';
-import Success from '../../components/Typography/Success.js';
-import avatar from '../../assets/img/faces/marc.jpg';
-import ForwardToInboxIcon from '@mui/icons-material/ForwardToInbox';
 import CardFooter from '../../components/Card/CardFooter.js';
-import Loader from '../../components/Loader/Loader.js';
-import CustomInput from '../../components/CustomInput/CustomInput.js';
-import Button from '../../components/CustomButtons/Button.js';
-import CircularProgress from '@mui/material/CircularProgress';
-import ErrorIcon from '@material-ui/icons/Error';
-import BigNumber from 'bignumber.js';
-import { utils } from 'ethers';
-import InputLabel from '@material-ui/core/InputLabel';
-import isValidAddress from '../../components/AddressValidator.js';
-import { useState, useEffect } from 'react';
-import Web3 from 'web3';
-import { useWeb3React } from '@web3-react/core';
-import { Contract, ethers, BigNumber as EthersBigNumber } from 'ethers';
-import { getDefaultProvider } from '../../components/WalletConnector.js';
-import coinAddressValidator from 'coin-address-validator';
-import { hexZeroPad } from '@ethersproject/bytes';
-import { AutoScaleAxis } from 'chartist';
+
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
+
+import Box from '@mui/material/Box';
+
+//Icon
+import Close from '@material-ui/icons/Close';
+import Check from '@material-ui/icons/Check';
+import avatar from '../../assets/img/faces/marc.jpg';
+import ForwardToInboxIcon from '@mui/icons-material/ForwardToInbox';
+import ErrorIcon from '@material-ui/icons/Error';
 import CardIcon from '../../components/Card/CardIcon.js';
 import Warning from '@material-ui/icons/Warning';
 import Icon from '@material-ui/core/Icon';
 import AddAlarmIcon from '@mui/icons-material/AddAlarm';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+
+//Input
+import TextField from '@mui/material/TextField';
+import { Label, Input } from 'reactstrap';
+import InputLabel from '@material-ui/core/InputLabel';
+import CustomInput from '../../components/CustomInput/CustomInput.js';
+import Button from '../../components/CustomButtons/Button.js';
+
+//Color
+import Danger from '../../components/Typography/Danger.js';
+import Success from '../../components/Typography/Success.js';
 import Primary from '../../components/Typography/Primary.js';
 import Info from '../../components/Typography/Info.js';
 
-import { LIQUIDITY_LOCK_ABI } from '../../Config/config.js';
-import { LIQUIDITYLOCK_ADDRESS } from '../../Config/config.js';
+//Web3 Interface
+import Web3 from 'web3';
+import { useWeb3React } from '@web3-react/core';
+import { Contract, ethers, BigNumber as EthersBigNumber } from 'ethers';
+import coinAddressValidator from 'coin-address-validator';
+import { hexZeroPad } from '@ethersproject/bytes';
+import BigNumber from 'bignumber.js';
+import { utils } from 'ethers';
 
-let contractAddr = LIQUIDITYLOCK_ADDRESS.eth; //Metamask
+import { getDefaultProvider } from '../../components/WalletConnector.js';
+import isValidAddress from '../../components/AddressValidator.js';
+
+//Constant
+import { TOKENLOCK_ADDRESS } from '../../Config/config.js';
+import { STANDARD_TOKEN_ABI } from '../../Config/config.js';
+import { TOKEN_LOCK_ABI } from '../../Config/config.js';
+
+import { AutoScaleAxis } from 'chartist';
+
+let contractAddr = TOKENLOCK_ADDRESS.eth; //Metamask
 // const contractAddr = '0xE6D2B6D7AD8956AF24e4d890574F1F42ebcfC4f9';//BSC
 
 const styles = {
@@ -74,10 +93,10 @@ const styles = {
 };
 
 const useStyles = makeStyles(styles);
-let lptokenaddr;
+let erctokenaddr;
 let decimals, balance, available, lockedamount, accountbalance;
 
-export default function LiqudityLock() {
+export default function Governance() {
   const classes = useStyles();
   const [tokenbalance, setTokenBalance] = useState('0');
   // const [lockamount, setLockAmount] = useState(0);
@@ -91,7 +110,6 @@ export default function LiqudityLock() {
   const [tokenstaddr, setTokenStAddr] = useState('');
   const [errlabel, setErrLabel] = useState('Error! Some problems happend. You should fix error.');
 
-  // let lptokencontract, tokenlockcontract;
   const [open, setOpen] = React.useState(false);
   const [opendis, setDigOpen] = React.useState(false);
 
@@ -105,24 +123,9 @@ export default function LiqudityLock() {
   const [lock_flag, setLockFlag] = useState(true);
   const [unlock_flag, setUnlockFlag] = useState(true);
 
+  // let erctokencontract, tokenlockcontract;
+
   const { account, library } = useWeb3React();
-
-  // useEffect(() => {
-  //   if (account !== undefined) {
-  //     setAccount("Connected");
-  //   }
-  // }, [account, ])
-
-  const addrChange = (addr) => {
-    // console.log(addr);
-    lptokenaddr = addr;
-    setTokenStAddr(lptokenaddr);
-    getLpBalance(lptokenaddr);
-  };
-
-  const handledlgClose = (value) => {
-    setDigOpen(false);
-  };
 
   useEffect(() => {
     if (account !== undefined) {
@@ -136,6 +139,17 @@ export default function LiqudityLock() {
     getPrice();
   });
 
+  const addrChange = (addr) => {
+    // console.log(addr);
+    erctokenaddr = addr;
+    setTokenStAddr(erctokenaddr);
+    getStandardTokenBalance(erctokenaddr);
+  };
+
+  const handledlgClose = (value) => {
+    setDigOpen(false);
+  };
+
   function PanicWithdrawDlg(props) {
     const { onClose, open } = props;
 
@@ -144,7 +158,7 @@ export default function LiqudityLock() {
     };
 
     const handleok = () => {
-      withdraw_remove_fee(lptokenaddr);
+      withdraw_remove_fee(erctokenaddr);
       onClose();
     };
 
@@ -173,14 +187,43 @@ export default function LiqudityLock() {
     );
   }
 
+  const checkvalidate = (amount) => {
+    let tokenbalance = ethers.utils.formatUnits(balance, decimals);
+    let accountbal = ethers.utils.formatUnits(accountbalance, decimals);
+
+    if (!amount) {
+      setErrLabel('Please input amount');
+      setProgressFlag(false);
+      setErroShow(true);
+      return false;
+    }
+
+    if (parseFloat(amount) > parseFloat(tokenbalance)) {
+      setErrLabel('Please input correct amount');
+      setProgressFlag(false);
+      setErroShow(true);
+      return false;
+    }
+
+    if (parseFloat(price) > parseFloat(accountbal)) {
+      setErrLabel('Your balance is in sufficient');
+      setProgressFlag(false);
+      setErroShow(true);
+      return false;
+    }
+
+    return true;
+  };
+
   const connectContract = (tokenabi, tokenaddr) => {
     let provider = getDefaultProvider();
     let tempcontract;
 
+    // console.log(provider);
+
     // contractAddr =
     // console.log("chainid");
     // console.log(library._network.chainId);
-    // console.log(library._network.chainId)
     if (!library) {
       return;
     }
@@ -190,19 +233,19 @@ export default function LiqudityLock() {
     }
 
     //Ropsten
-    if (library._network.chainId === 3) {
-      console.log('ethereum chain id');
-      contractAddr = LIQUIDITYLOCK_ADDRESS.eth;
-    } else if (library._network.chainId === 97) {
+    if (library._network.chainId == 3) {
+      // console.log("ethereum chain id")
+      contractAddr = TOKENLOCK_ADDRESS.eth;
+    } else if (library._network.chainId == 97) {
       // console.log("bsc chain id")
-      contractAddr = LIQUIDITYLOCK_ADDRESS.bsc;
+      contractAddr = TOKENLOCK_ADDRESS.bsc;
     }
     // const isBtcAddress  = coinAddressValidator.validate('1Gz3SRHzmzV8NwhUe5LQkTy5ysH1aqevAP', 'btc', 'prod');
     const isEthAddress = coinAddressValidator.validate(tokenaddr, 'eth', 'prod');
 
     if (!isEthAddress) {
       // console.log("Wallet address is invalid");
-      setErrLabel('Address is invalid');
+      setErrLabel('Token address is invalied');
       return null;
     }
 
@@ -218,14 +261,18 @@ export default function LiqudityLock() {
     return tempcontract;
   };
 
-  const createLpContract = (addr) => {
+  const createStandardContract = (addr) => {
     let tokenContract;
 
     if (!library || !account) {
       return null;
     }
 
-    tokenContract = connectContract(LIQUIDITY_LOCK_ABI.token, addr);
+    // if(library._network.chainId == 3) {
+    //   tokenContract = connectContract(STANDARD_TOKEN_ABI.eth, addr);
+    // } else if(library._network.chainId == 97) {
+    tokenContract = connectContract(STANDARD_TOKEN_ABI, addr);
+    // }
 
     if (!tokenContract) {
       return null;
@@ -254,7 +301,7 @@ export default function LiqudityLock() {
       return null;
     }
 
-    tokenContract = connectContract(LIQUIDITY_LOCK_ABI.lock, contractAddr);
+    tokenContract = connectContract(TOKEN_LOCK_ABI, contractAddr);
 
     if (!tokenContract) {
       return null;
@@ -274,34 +321,6 @@ export default function LiqudityLock() {
     }
 
     return tokenContract;
-  };
-
-  const checkvalidate = (amount) => {
-    let tokenbalance = ethers.utils.formatUnits(balance, decimals);
-    let accountbal = ethers.utils.formatUnits(accountbalance, decimals);
-
-    if (!amount) {
-      setErrLabel('Please input amount');
-      setProgressFlag(false);
-      setErroShow(true);
-      return false;
-    }
-
-    if (parseFloat(amount) > parseFloat(tokenbalance)) {
-      setErrLabel('Please input correct amount');
-      setProgressFlag(false);
-      setErroShow(true);
-      return false;
-    }
-
-    if (parseFloat(price) > parseFloat(accountbal)) {
-      setErrLabel('Your balance is in sufficient');
-      setProgressFlag(false);
-      setErroShow(true);
-      return false;
-    }
-
-    return true;
   };
 
   const getPrice = async () => {
@@ -332,14 +351,15 @@ export default function LiqudityLock() {
     setPrice(ethers.utils.formatUnits(tprice, 18));
   };
 
-  const getLpBalance = async (address) => {
+  const getStandardTokenBalance = async (address) => {
     // let web3 = new Web3(window.web3.currentProvider);
 
     setProgressFlag(true);
     setTransActiveFlag(false);
     setErroShow(false);
 
-    let lp, lock;
+    let erc, lock;
+    let res;
 
     if (!account) {
       setErrLabel('Wallet is unconnected');
@@ -358,6 +378,42 @@ export default function LiqudityLock() {
       return;
     }
 
+    try {
+      res = await library.getCode(address);
+    } catch (error) {
+      res = '';
+      // console.log("token address invalid");
+      setErrLabel('token address invalid');
+      // console.log(error);
+      setProgressFlag(false);
+      setErroShow(true);
+      return;
+    }
+
+    // console.log("bytecode")
+    // console.log(res)
+
+    if (res !== '0x') {
+      // console.log("token address valid");
+      // setErrLabel("token address invalid");
+    } else {
+      // console.log("token address invalid");
+      setErrLabel('token address invalid');
+
+      setProgressFlag(false);
+      setErroShow(false);
+    }
+
+    erc = createStandardContract(address);
+
+    if (!erc) {
+      setProgressFlag(false);
+      setErroShow(true);
+      return;
+    }
+
+    // console.log("next");
+
     lock = CreateLockContract();
 
     if (!lock) {
@@ -366,50 +422,17 @@ export default function LiqudityLock() {
       return;
     }
 
-    // let checkflag;
-
-    try {
-      checkflag = await lock.checkLp(address);
-    } catch (error) {
-      // console.log("Lp check function error");
-      setErrLabel('Lp token address in invalid');
-      // console.log(error)
-      setProgressFlag(false);
-      setErroShow(true);
-      return;
-    }
-
-    let checkflag = true;
-
-    // console.log("Lp lock contract error")
-
-    if (checkflag !== true) {
-      // console.log("Lp check error");
-      setErrLabel('Lp token address in invalid');
-      setProgressFlag(false);
-      setErroShow(true);
-      return;
-    }
-
-    lp = createLpContract(address);
-
-    if (!lp) {
-      setProgressFlag(false);
-      setErroShow(true);
-      return;
-    }
-
-    let tsymbol, tname, tunlocktime, tpenaltyfee, tprice;
+    let tsymbol, tname, tunlocktime;
     let calc_lockallow, calc_balance, calc_lockedamount;
 
     try {
-      decimals = await lp.decimals();
-      balance = await lp.balanceOf(account);
-      available = await lp.allowance(account, contractAddr);
+      decimals = await erc.decimals();
+      balance = await erc.balanceOf(account);
+      available = await erc.allowance(account, contractAddr);
       lockedamount = await lock.GetBalance(address);
 
-      tsymbol = await lp.symbol();
-      tname = await lp.name();
+      tsymbol = await erc.symbol();
+      tname = await erc.name();
       tunlocktime = await lock.GetUnlockTime(address);
 
       setSymbol(tsymbol);
@@ -417,13 +440,6 @@ export default function LiqudityLock() {
 
       const date = new Date(tunlocktime.toNumber() * 1000);
       setUnlockTime(date.toLocaleString('en-GB'));
-
-      setTokenBalance(ethers.utils.formatUnits(balance, decimals));
-      setLockallowance(ethers.utils.formatUnits(available, decimals));
-      setLockedAmount(ethers.utils.formatUnits(lockedamount, decimals));
-
-      setProgressFlag(false);
-      setTransActiveFlag(true);
 
       calc_balance = ethers.utils.formatUnits(balance, decimals);
       calc_lockallow = ethers.utils.formatUnits(available, decimals);
@@ -450,9 +466,13 @@ export default function LiqudityLock() {
       } else {
         setUnlockFlag(true);
       }
+
+      setProgressFlag(false);
+      setTransActiveFlag(true);
     } catch (error) {
+      // console.log('Get Information Error');
       setErrLabel('Get Information Error');
-      // console.log(error)
+      // console.log(error);
       setProgressFlag(false);
       setTransActiveFlag(false);
       setErroShow(true);
@@ -465,38 +485,37 @@ export default function LiqudityLock() {
 
     setProgressFlag(true);
     setErroShow(false);
-    // setTransActiveFlag(false)
 
     let amount = document.getElementById('idamount').value;
-
-    let lp, lock;
+    // console.log(amount.toString());
+    let erc, lock;
 
     if (!checkvalidate(amount)) {
       return;
     }
 
-    lp = createLpContract(lptokenaddr);
+    erc = createStandardContract(erctokenaddr);
 
-    if (!lp) {
+    if (!erc) {
       setProgressFlag(false);
       setErroShow(true);
+      setErrLabel('Connect Error');
       return;
     }
 
     try {
-      await lp.approve(contractAddr, ethers.utils.parseUnits(amount, decimals));
-      await lp.on('Approval', (address1, address2, num) => {
+      await erc.approve(contractAddr, ethers.utils.parseUnits(amount, decimals));
+      await erc.on('Approval', (address1, address2, num) => {
         setProgressFlag(false);
-        getLpBalance(lptokenaddr);
+        getStandardTokenBalance(erctokenaddr);
       });
     } catch (err) {
       // console.log('Approve Error');
       setErrLabel('Approve Error');
-      console.log(err);
       setProgressFlag(false);
       setErroShow(true);
-      return;
       // console.log(err)
+      return;
     }
 
     // Notice this is an array of topic-sets and is identical to
@@ -510,6 +529,7 @@ export default function LiqudityLock() {
     let lock;
 
     let amount = document.getElementById('idamount').value;
+    // let penaltyfee = document.getElementById("idpenaltyfee").value;
     let locktime = document.getElementById('idlocktime').value;
 
     if (!checkvalidate(amount)) {
@@ -531,8 +551,8 @@ export default function LiqudityLock() {
     };
 
     try {
-      await lock.lpLock(
-        lptokenaddr,
+      await lock.tokenLock(
+        erctokenaddr,
         ethers.utils.parseUnits(amount, decimals),
         Date.parse(locktime) / 1000,
         account,
@@ -540,11 +560,11 @@ export default function LiqudityLock() {
       );
       await lock.on('Hold', (address1, address2, num, a, b) => {
         setProgressFlag(false);
-        getLpBalance(lptokenaddr);
+        getStandardTokenBalance(erctokenaddr);
       });
     } catch (err) {
       // console.log('Lock token error');
-      setErrLabel('Lock error');
+      setErrLabel('Lock token error');
       // console.log(err)
       setProgressFlag(false);
       setErroShow(true);
@@ -567,42 +587,35 @@ export default function LiqudityLock() {
       return;
     }
 
-    let overrides = {
-      gasPrice: 0,
-
-      // The maximum units of gas for the transaction to use
-      gasLimit: 23000,
-    };
-
     try {
-      await lock.withdraw(lptokenaddr);
+      await lock.withdraw(erctokenaddr);
       await lock.on('Withdrawal', (address1, address2, num) => {
         setProgressFlag(false);
-        getLpBalance(lptokenaddr);
+        getStandardTokenBalance(erctokenaddr);
       });
-      // await lock.withdraw(lptokenaddr);
+      // await lock.withdraw(erctokenaddr);
     } catch (err) {
       // console.log('Withdraw token error');
-      setErrLabel('Withdraw lp token error');
-
+      setErrLabel('Withdraw token error');
+      // console.log(err);
       if (err.data) {
         if (err.data.message.toString().includes('Unlock time')) {
           setDigOpen(true);
         }
       }
 
+      // console.log(typeof(err))
+      // console.log(err.toString().includes("Unlock time"))
       if (err.toString().includes('Unlock time')) {
         setDigOpen(true);
       }
 
+      // console.log(err)
       setProgressFlag(false);
       setErroShow(true);
       return;
       // console.log(err);
     }
-
-    // setProgressFlag(false)
-    // getLpBalance(lptokenaddr);
   };
 
   const withdraw_remove_fee = async (address) => {
@@ -620,10 +633,10 @@ export default function LiqudityLock() {
     }
 
     try {
-      await lock.panicWithdraw(lptokenaddr);
+      await lock.panicWithdraw(erctokenaddr);
       await lock.on('PanicWithdraw', (address1, address2, num, num2) => {
         setProgressFlag(false);
-        getLpBalance(lptokenaddr);
+        getStandardTokenBalance(erctokenaddr);
       });
       // await lock.withdraw(erctokenaddr);
     } catch (err) {
@@ -635,13 +648,13 @@ export default function LiqudityLock() {
   };
 
   const claimtokenfees = async (address) => {
-    try {
-      await lockconractaddr.claimTokenFees(address);
-    } catch (err) {
-      // console.log('claimToken fees error');
-      return;
-      // console.log(err);
-    }
+    // try {
+    //   await lockconractaddr.claimTokenFees(address);
+    // } catch (err) {
+    //   // console.log('claimToken fees error');
+    //   return;
+    //   // console.log(err);
+    // }
   };
 
   const [value, setValue] = React.useState(new Date('2014-08-18T21:11:54'));
@@ -655,9 +668,9 @@ export default function LiqudityLock() {
       <GridItem xs={12} sm={12} md={8}>
         <Card>
           {/* <CardHeader color="primary">
-            <h4 className={classes.cardTitleWhite}>Liqudity Locker</h4>
+            <h4 className={classes.cardTitleWhite}>Token Locker</h4>
             <p className={classes.cardCategoryWhite}>
-            Use the locker to prove to investors you have locked liquidity. If you are not a token developer, this section is almost definitely not for you.{" "}</p>
+            Token locks are allowing all ERC20 tokens including Rebasing and Deflationary mechanisms to be supported.{" "}</p>
           </CardHeader> */}
           <CardBody>
             {/* <GridContainer> */}
@@ -719,17 +732,17 @@ export default function LiqudityLock() {
                       }}
                     />
                   </GridItem>
-                  <GridItem xs={12} sm={12} md={4}>
+                  <GridItem xs={12} sm={12} md={5}>
                     <Label>
                       Input time
                       <TextField
                         id="idlocktime"
                         // label="Unlock time"
+                        disabled={lock_flag}
                         type="datetime-local"
                         defaultValue={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
                           .toISOString()
                           .slice(0, 16)}
-                        disabled={lock_flag}
                         sx={{ width: 215 }}
                         InputLabelProps={{
                           shrink: true,
@@ -737,7 +750,7 @@ export default function LiqudityLock() {
                       />
                     </Label>
                   </GridItem>
-                  <GridItem xs={12} sm={12} md={4}>
+                  <GridItem xs={12} sm={12} md={2}>
                     {/* <CustomInput
                     labelText="Penalty Fee : 50"
                     id = "idpenaltyfee"
